@@ -164,141 +164,105 @@
     <div class="footer">by DANZ</div>
   </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-  const diamonds = [
-    ["5", 1500], ["12", 2500], ["50", 10000], ["70", 12000],
-    ["140", 22000], ["355", 52000], ["720", 102000]
-  ];
+  <script>
+    const diamonds = [
+      ["5", 1500], ["12", 2500], ["50", 10000], ["70", 12000],
+      ["140", 22000], ["355", 52000], ["720", 102000]
+    ];
 
-  // Link dasar payment, tanpa nominal
-  const payments = [
-    { name: "Dana", img: "Logo_dana_blue.svg.png", baseLink: "https://link.dana.id/minta?full_url=https://qr.dana.id/v1/281012012021040146131275" },
-    { name: "OVO", img: "OVO - dianisa.com.png", baseLink: "https://wa.me/6281393509406?text=Transfer%20OVO%20ke%20081393509406" },
-    { name: "ShopeePay", img: "Logo ShopeePay - Dianisa.com.png", baseLink: "https://app.u.shopeepay.co.id/u/aNvW5qy6Qw6NPvuqX8Bzk" },
-    { name: "QRIS", img: "quick-response-code-indonesia-standard-qris-seeklogo.png", baseLink: null },
-    { name: "Offline (Hanya Untuk Teman)", img: null, baseLink: null }
-  ];
+    const payments = [
+      { name: "Dana", img: "Logo_dana_blue.svg.png", linkPrefix: "https://link.dana.id/minta?amount=" },
+      { name: "ShopeePay", img: "Logo ShopeePay - Dianisa.com.png", linkPrefix: "https://wa.me/6281393509406?text=Transfer%20ShopeePay%20Rp%20" },
+      { name: "QRIS", img: "quick-response-code-indonesia-standard-qris-seeklogo.png", linkPrefix: "https://wa.me/6281393509406?text=Transfer%20QRIS%20Rp%20" },
+      { name: "Offline (Hanya Untuk Teman)", img: null, linkPrefix: null }
+    ];
 
-  const diamondContainer = document.getElementById('diamond-options');
-  diamonds.forEach(([qty, price], i) => {
-    const card = document.createElement('div');
-    card.className = 'diamond-card';
-    card.innerHTML = `
-      <input type="radio" name="diamond" value="${qty}|${price}" id="d${i}" />
-      <label for="d${i}">
-        <div class="diamond-title">${qty} 💎</div>
-        <div class="diamond-price">Rp. ${price.toLocaleString()}</div>
-      </label>
-    `;
-    diamondContainer.appendChild(card);
-  });
+    const diamondContainer = document.getElementById('diamond-options');
+    diamonds.forEach(([qty, price], i) => {
+      const card = document.createElement('div');
+      card.className = 'diamond-card';
+      card.innerHTML = `
+        <input type="radio" name="diamond" value="${qty}|${price}" id="d${i}" />
+        <label for="d${i}">
+          <div class="diamond-title">${qty} 💎</div>
+          <div class="diamond-price">Rp. ${price.toLocaleString()}</div>
+        </label>
+      `;
+      diamondContainer.appendChild(card);
+    });
 
-  const paymentContainer = document.getElementById('payment-options');
-  payments.forEach((method, i) => {
-    const div = document.createElement('div');
-    div.className = 'payment-card';
-    div.innerHTML = `
-      <input type="radio" name="payment" value="${method.name}" id="pm${i}" data-base-link="${method.baseLink ? method.baseLink : ''}" />
-      <label for="pm${i}">
-        ${method.img ? `<img src="${method.img}" alt="${method.name}" />` : ''}
-        <span>${method.name}</span>
-      </label>
-    `;
-    paymentContainer.appendChild(div);
-  });
+    const paymentContainer = document.getElementById('payment-options');
+    payments.forEach((method, i) => {
+      const div = document.createElement('div');
+      div.className = 'payment-card';
+      div.innerHTML = `
+        <input type="radio" name="payment" value="${method.name}" id="pm${i}" data-prefix="${method.linkPrefix ? method.linkPrefix : ''}" />
+        <label for="pm${i}">
+          ${method.img ? `<img src="${method.img}" alt="${method.name}" />` : ''}
+          <span>${method.name}</span>
+        </label>
+      `;
+      paymentContainer.appendChild(div);
+    });
 
-  function addAmountToLink(baseLink, amount, paymentName) {
-    if (!baseLink) return null;
+    function submitForm() {
+      const userId = document.getElementById('userId').value.trim();
+      const diamondInput = document.querySelector('input[name="diamond"]:checked');
+      const paymentInput = document.querySelector('input[name="payment"]:checked');
 
-    // Special case Dana: insert amount param before full_url param (if possible)
-    if (paymentName === "Dana") {
-      // Example original: https://link.dana.id/minta?full_url=...
-      // Insert &amount= after ?
-      if (baseLink.includes('?')) {
-        return baseLink.replace('?', `?amount=${amount}&`);
-      } else {
-        return baseLink + `?amount=${amount}`;
+      if (!userId) {
+        return Swal.fire("Oops!", "Masukkan User ID terlebih dahulu.", "warning");
       }
-    }
 
-    // For ShopeePay & others, append ?amount= or &amount=
-    if (baseLink.includes('?')) {
-      return baseLink + `&amount=${amount}`;
-    } else {
-      return baseLink + `?amount=${amount}`;
-    }
-  }
+      if (!/^\d+$/.test(userId)) {
+        return Swal.fire("Format Salah!", "User ID hanya boleh angka.", "error");
+      }
 
-  function submitForm() {
-    const userId = document.getElementById('userId').value.trim();
-    const diamondInput = document.querySelector('input[name="diamond"]:checked');
-    const paymentInput = document.querySelector('input[name="payment"]:checked');
+      if (userId.length < 6 || userId.length > 12) {
+        return Swal.fire("Jumlah Digit Salah!", "User ID harus 6–12 digit.", "error");
+      }
 
-    if (!userId) {
-      return Swal.fire("Oops!", "Masukkan User ID terlebih dahulu.", "warning");
-    }
+      if (!diamondInput) {
+        return Swal.fire("Pilih Diamond", "Silakan pilih jumlah diamond.", "info");
+      }
 
-    if (!/^\d+$/.test(userId)) {
-      return Swal.fire("Format Salah!", "User ID hanya boleh angka.", "error");
-    }
+      if (!paymentInput) {
+        return Swal.fire("Pilih Pembayaran", "Silakan pilih metode pembayaran.", "info");
+      }
 
-    if (userId.length < 6 || userId.length > 12) {
-      return Swal.fire("Jumlah Digit Salah!", "User ID harus 6–12 digit, sesuai ID di Free Fire.", "error");
-    }
+      const [qty, price] = diamondInput.value.split("|");
+      const paymentName = paymentInput.value;
+      const prefix = paymentInput.dataset.prefix;
 
-    if (!diamondInput) {
-      return Swal.fire("Pilih Diamond", "Silakan pilih jumlah diamond.", "info");
-    }
+      Swal.fire({
+        title: 'Konfirmasi Pesanan',
+        html: `
+          <p><strong>ID Pemain:</strong> ${userId}</p>
+          <p><strong>Diamond:</strong> ${qty} 💎</p>
+          <p><strong>Metode Pembayaran:</strong> ${paymentName}</p>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Lanjutkan',
+        cancelButtonText: 'Batal',
+        reverseButtons: true
+      }).then((result) => {
+        if (result.isConfirmed) {
+          if (paymentName === "Offline (Hanya Untuk Teman)") {
+            const waLink = `https://wa.me/6281393509406?text=Top%20Up%20FF%0AID:%20${userId}%0ADiamond:%20${qty}%0AMetode:%20${paymentName}`;
+            window.location.href = waLink;
+          } else {
+            const link = `${prefix}${price}`;
+            window.location.href = link;
 
-    if (!paymentInput) {
-      return Swal.fire("Pilih Pembayaran", "Silakan pilih metode pembayaran.", "info");
-    }
-
-    const [qty, price] = diamondInput.value.split("|");
-    const paymentName = paymentInput.value;
-    const baseLink = paymentInput.dataset.baseLink;
-
-    Swal.fire({
-      title: 'Konfirmasi Pesanan',
-      html: `
-        <p><strong>ID Pemain:</strong> ${userId}</p>
-        <p><strong>Diamond:</strong> ${qty} 💎</p>
-        <p><strong>Metode Pembayaran:</strong> ${paymentName}</p>
-        <p><strong>Nominal:</strong> Rp. ${parseInt(price).toLocaleString()}</p>
-      `,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Lanjutkan',
-      cancelButtonText: 'Batal',
-      reverseButtons: true
-    }).then((result) => {
-      if (result.isConfirmed) {
-        if (paymentName === "Offline (Hanya Untuk Teman)") {
-          // Langsung ke WA untuk offline
-          const waLink = `https://wa.me/6281393509406?text=Top%20Up%20FF%0AID:%20${encodeURIComponent(userId)}%0ADiamond:%20${qty}%0AMetode:%20${encodeURIComponent(paymentName)}`;
-          window.location.href = waLink;
-        } else {
-          // Tambah nominal di link payment (jika ada baseLink)
-          let paymentLink = baseLink;
-          if (paymentLink) {
-            paymentLink = addAmountToLink(paymentLink, price, paymentName);
-            window.location.href = paymentLink;
-
-            // Setelah 10 detik redirect ke WA konfirmasi
             setTimeout(() => {
-              const waLink = `https://wa.me/6281393509406?text=Konfirmasi%20Top%20Up%0AID:%20${encodeURIComponent(userId)}%0ADiamond:%20${qty}%0AMetode:%20${encodeURIComponent(paymentName)}%0ANominal:%20Rp.%20${parseInt(price).toLocaleString()}`;
+              const waLink = `https://wa.me/6281393509406?text=Konfirmasi%20Top%20Up%0AID:%20${userId}%0ADiamond:%20${qty}%0AMetode:%20${paymentName}`;
               window.location.href = waLink;
             }, 10000);
-          } else {
-            // Jika tidak ada link pembayaran, langsung ke WA
-            const waLink = `https://wa.me/6281393509406?text=Top%20Up%20FF%0AID:%20${encodeURIComponent(userId)}%0ADiamond:%20${qty}%0AMetode:%20${encodeURIComponent(paymentName)}%0ANominal:%20Rp.%20${parseInt(price).toLocaleString()}`;
-            window.location.href = waLink;
           }
         }
-      }
-    });
-  }
-</script>
+      });
+    }
+  </script>
 </body>
 </html>
