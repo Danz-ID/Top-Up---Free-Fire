@@ -170,11 +170,11 @@
     ];
 
     const payments = [
-      { name: "Dana", img: "Logo_dana_blue.svg.png" },
-      { name: "OVO", img: "OVO - dianisa.com.png" },
-      { name: "ShopeePay", img: "Logo ShopeePay - Dianisa.com.png" },
-      { name: "QRIS", img: "quick-response-code-indonesia-standard-qris-seeklogo.png" },
-      { name: "Offline (Hanya Untuk Teman)", img: null }
+      { name: "Dana", img: "Logo_dana_blue.svg.png", link: "https://link.dana.id/minta?full_url=https://qr.dana.id/v1/281012012021040146131275" },
+      { name: "OVO", img: "OVO - dianisa.com.png", link: "https://wa.me/6281393509406?text=Transfer%20ke%20OVO%20(081393509406)" },
+      { name: "ShopeePay", img: "Logo ShopeePay - Dianisa.com.png", link: "https://app.u.shopeepay.co.id/u/aNvW5qy6Qw6NPvuqX8Bzk" },
+      { name: "QRIS", img: "quick-response-code-indonesia-standard-qris-seeklogo.png", link: "https://link.dana.id/minta?full_url=https://qr.dana.id/v1/281012012021040146131275" },
+      { name: "Offline (Hanya Untuk Teman)", img: null, link: null }
     ];
 
     const diamondContainer = document.getElementById('diamond-options');
@@ -196,7 +196,7 @@
       const div = document.createElement('div');
       div.className = 'payment-card';
       div.innerHTML = `
-        <input type="radio" name="payment" value="${method.name}" id="pm${i}" />
+        <input type="radio" name="payment" value="${i}" id="pm${i}" />
         <label for="pm${i}">
           ${method.img ? `<img src="${method.img}" alt="${method.name}" />` : ''}
           <span>${method.name}</span>
@@ -207,15 +207,31 @@
 
     function submitForm() {
       const userId = document.getElementById('userId').value.trim();
-      const diamond = document.querySelector('input[name="diamond"]:checked');
-      const payment = document.querySelector('input[name="payment"]:checked');
+      const diamondInput = document.querySelector('input[name="diamond"]:checked');
+      const paymentInput = document.querySelector('input[name="payment"]:checked');
 
       if (!userId) return alert("Masukkan User ID terlebih dahulu.");
-      if (!diamond) return alert("Pilih jumlah diamond.");
-      if (!payment) return alert("Pilih metode pembayaran.");
+      if (!diamondInput) return alert("Pilih jumlah diamond.");
+      if (!paymentInput) return alert("Pilih metode pembayaran.");
 
-      const waLink = `https://wa.me/6281393509406?text=Top%20Up%20FF%0AID:%20${encodeURIComponent(userId)}%0ADiamond:%20${diamond.value.split('|')[0]}%0AMetode:%20${encodeURIComponent(payment.value)}`;
-      window.location.href = waLink;
+      const [diamondQty, diamondPrice] = diamondInput.value.split("|");
+      const paymentIndex = parseInt(paymentInput.value);
+      const paymentMethod = payments[paymentIndex];
+
+      // Langkah 1: Redirect ke aplikasi pembayaran
+      if (paymentMethod.link) {
+        window.open(paymentMethod.link, "_blank");
+
+        // Langkah 2: Setelah redirect, konfirmasi ke WA
+        setTimeout(() => {
+          const waLink = `https://wa.me/6281393509406?text=Top%20Up%20FF%0AID:%20${encodeURIComponent(userId)}%0ADiamond:%20${diamondQty}%0AMetode:%20${encodeURIComponent(paymentMethod.name)}%0AJumlah:%20Rp%20${parseInt(diamondPrice).toLocaleString()}`;
+          window.location.href = waLink;
+        }, 3000);
+      } else {
+        // Offline langsung ke WhatsApp
+        const waLink = `https://wa.me/6281393509406?text=Top%20Up%20FF%0AID:%20${encodeURIComponent(userId)}%0ADiamond:%20${diamondQty}%0AMetode:%20Offline`;
+        window.location.href = waLink;
+      }
     }
   </script>
 </body>
